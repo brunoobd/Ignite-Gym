@@ -13,9 +13,14 @@ import { Header } from "@components/header";
 import { Input } from "@components/input";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
 
 export const SignIn = () => {
+  const { navigate } = useNavigation<AuthNavigatorRoutesProps>();
   const insets = useSafeAreaInsets();
+
+  const handleNewAccount = () => navigate("signUp");
 
   return (
     <ScrollView
@@ -23,7 +28,11 @@ export const SignIn = () => {
       showsVerticalScrollIndicator={false}
     >
       <Container insets={insets}>
-        <BackgroundImage alt={"Pessoas treinando"} source={Image} />
+        <BackgroundImage
+          alt={"Pessoas treinando"}
+          source={Image}
+          defaultSource={Image}
+        />
 
         <Content>
           <Header />
@@ -41,7 +50,11 @@ export const SignIn = () => {
 
           <Footer>
             <FooterTitle>Ainda não tem acesso?</FooterTitle>
-            <Button title={"Criar conta"} variant={"SECONDARY"} />
+            <Button
+              title={"Criar conta"}
+              variant={"SECONDARY"}
+              onPress={handleNewAccount}
+            />
           </Footer>
         </Content>
       </Container>
