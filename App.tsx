@@ -1,12 +1,12 @@
+import theme from "src/theme";
 import {
   Roboto_400Regular,
   Roboto_700Bold,
   useFonts,
 } from "@expo-google-fonts/roboto";
-import { SignUp } from "@screens/signup";
-import { ActivityIndicator, StatusBar, Text, View } from "react-native";
+import { Routes } from "@routes/index";
+import { ActivityIndicator, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import theme from "src/theme";
 import { ThemeProvider } from "styled-components/native";
 
 export default function App() {
@@ -21,7 +21,7 @@ export default function App() {
           translucent
         />
 
-        {fontsLoaded ? <SignUp /> : <ActivityIndicator />}
+        {fontsLoaded ? <Routes /> : <ActivityIndicator />}
       </ThemeProvider>
     </SafeAreaProvider>
   );
