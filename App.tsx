@@ -3,6 +3,7 @@ import {
   Roboto_700Bold,
   useFonts,
 } from "@expo-google-fonts/roboto";
+import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { Routes } from "@routes/index";
 import { ActivityIndicator, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -12,13 +13,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar
-        barStyle={"light-content"}
-        backgroundColor={"transparent"}
-        translucent
-      />
+      <GluestackUIProvider>
+        <StatusBar
+          barStyle={"light-content"}
+          backgroundColor={"transparent"}
+          translucent
+        />
 
-      {fontsLoaded ? <Routes /> : <ActivityIndicator />}
+        {fontsLoaded ? <Routes /> : <ActivityIndicator />}
+      </GluestackUIProvider>
     </SafeAreaProvider>
   );
 }
