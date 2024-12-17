@@ -8,6 +8,7 @@ import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Loading } from "@components/loading";
+import { SignIn } from "@screens/signIn";
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
@@ -21,7 +22,7 @@ export default function App() {
           translucent
         />
 
-        {fontsLoaded ? <></> : <Loading />}
+        {fontsLoaded ? <SignIn /> : <Loading />}
       </GluestackUIProvider>
     </SafeAreaProvider>
   );
