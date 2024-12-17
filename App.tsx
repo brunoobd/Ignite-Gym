@@ -5,7 +5,6 @@ import {
 } from "@expo-google-fonts/roboto";
 import { config } from "./config/gluestack-ui.config";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
-import { Routes } from "@routes/index";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Loading } from "@components/loading";
@@ -22,7 +21,7 @@ export default function App() {
           translucent
         />
 
-        {fontsLoaded ? <Routes /> : <Loading />}
+        {fontsLoaded ? <></> : <Loading />}
       </GluestackUIProvider>
     </SafeAreaProvider>
   );
