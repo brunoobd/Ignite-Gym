@@ -37,7 +37,7 @@ export const SignIn = () => {
           </Center>
 
           <Center gap={"$2"}>
-            <Heading color={"$gray100"}>Acesse a cota</Heading>
+            <Heading color={"$gray100"}>Acesse a conta</Heading>
 
             <Input
               placeholder={"E-mail"}
