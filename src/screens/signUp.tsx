@@ -17,7 +17,7 @@ export const SignUp = () => {
       contentContainerStyle={{ flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
     >
-      <VStack flex={1} bg={"$gray700"}>
+      <VStack flex={1}>
         <Image
           alt={"Pessoas treinando"}
           defaultSource={BackgroundImage}
