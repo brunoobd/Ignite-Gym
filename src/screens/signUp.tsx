@@ -8,8 +8,8 @@ import {
 } from "@gluestack-ui/themed";
 import BackgroundImage from "@assets/background.png";
 import Logo from "@assets/logo.svg";
-import { Input } from "@components/input";
-import { Button } from "@components/button";
+import { Input } from "@components/Input";
+import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
 
 export const SignUp = () => {
