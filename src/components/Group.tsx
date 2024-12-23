@@ -10,6 +10,7 @@ export const Group = ({ name, isActive, ...rest }: Props) => (
   <Button
     minWidth="$24"
     h="$10"
+    mr="$3"
     bg="$gray600"
     rounded="$md"
     justifyContent="center"
