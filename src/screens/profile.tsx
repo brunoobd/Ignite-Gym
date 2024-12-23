@@ -1,9 +1,9 @@
 import { Center, Text } from "@gluestack-ui/themed"
 
-export const History = () => {
+export const Profile = () => {
   return (
     <Center flex={1}>
-      <Text>History</Text>
+      <Text>Profile</Text>
     </Center>
   )
 }
