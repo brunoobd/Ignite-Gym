@@ -60,6 +60,7 @@ export const SignUp = () => {
       setIsLoading(true);
 
       await api.post("/users", { name, email, password });
+      
       await signIn({ email, password });
     } catch (error) {
       const isAppError = error instanceof AppError;
