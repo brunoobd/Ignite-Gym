@@ -5,7 +5,7 @@ import { Box } from "@gluestack-ui/themed";
 import { AppRoutes } from "./app.routes";
 
 export const Routes = () => {
-  const logged = true;
+  const logged = false;
   DefaultTheme.colors.background = gluestackUIConfig.tokens.colors.gray700;
 
   return (
