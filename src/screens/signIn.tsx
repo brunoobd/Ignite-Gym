@@ -4,6 +4,7 @@ import {
   Image,
   ScrollView,
   Text,
+  useToast,
   VStack,
 } from "@gluestack-ui/themed";
 import BackgroundImage from "@assets/background.png";
@@ -15,6 +16,10 @@ import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useAuth } from "@hooks/useAuth";
+import { AppError } from "@utils/AppError";
+import { ToastMessage } from "@components/ToastMessage";
+import { useState } from "react";
 
 type FormData = {
   email: string;
@@ -27,6 +32,8 @@ const signInSchema = yup.object({
 });
 
 export const SignIn = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const {
     control,
     handleSubmit,
@@ -35,8 +42,35 @@ export const SignIn = () => {
     resolver: yupResolver(signInSchema),
   });
   const { navigate } = useNavigation<AuthNavigatorRoutesProps>();
+  const toast = useToast();
 
-  const handleSignIn = (data: FormData) => console.log(data);
+  const handleSignIn = async ({ email, password }: FormData) => {
+    try {
+      setIsLoading(true);
+
+      await signIn({ email, password });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const toastDescription = isAppError
+        ? error.message
+        : "Tente novamente mais tarde.";
+
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            title="Erro ao entrar."
+            description={toastDescription}
+            action="error"
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+
+      setIsLoading(false);
+    }
+  };
 
   const handleNewAccount = () => navigate("signUp");
 
@@ -98,7 +132,11 @@ export const SignIn = () => {
               )}
             />
 
-            <Button title={"Acessar"} onPress={handleSubmit(handleSignIn)} />
+            <Button
+              title={"Acessar"}
+              onPress={handleSubmit(handleSignIn)}
+              isLoading={isLoading}
+            />
           </Center>
 
           <Center flex={1} justifyContent={"flex-end"} mt={"$4"}>
