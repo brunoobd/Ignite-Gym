@@ -4,6 +4,7 @@ import {
   Image,
   ScrollView,
   Text,
+  useToast,
   VStack,
 } from "@gluestack-ui/themed";
 import BackgroundImage from "@assets/background.png";
@@ -14,6 +15,11 @@ import { useNavigation } from "@react-navigation/native";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import { ToastMessage } from "@components/ToastMessage";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type FormData = {
   name: string;
@@ -37,6 +43,8 @@ const signUpSchema = yup.object({
 });
 
 export const SignUp = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const {
     control,
     handleSubmit,
@@ -45,8 +53,36 @@ export const SignUp = () => {
     resolver: yupResolver(signUpSchema),
   });
   const { goBack } = useNavigation();
+  const toast = useToast();
 
-  const handleSignUp = (data: FormData) => console.log(data);
+  const handleSignUp = async ({ name, email, password }: FormData) => {
+    try {
+      setIsLoading(true);
+
+      await api.post("/users", { name, email, password });
+      await signIn({ email, password });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const toastDescription = isAppError
+        ? error.message
+        : "Tente novamente mais tarde.";
+
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            title="Erro ao criar a conta."
+            description={toastDescription}
+            action="error"
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+
+      setIsLoading(false);
+    }
+  };
 
   const handleGoBack = () => goBack();
 
@@ -138,6 +174,7 @@ export const SignUp = () => {
             <Button
               title={"Criar e acessar"}
               onPress={handleSubmit(handleSignUp)}
+              isLoading={isLoading}
             />
           </Center>
 
