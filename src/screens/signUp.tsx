@@ -24,7 +24,7 @@ type FormData = {
 
 const signUpSchema = yup.object({
   name: yup.string().required("Informe o nome."),
-  email: yup.string().required("Informe o e-mai.").email("E-mail inválido."),
+  email: yup.string().required("Informe o e-mail.").email("E-mail inválido."),
   password: yup
     .string()
     .required("Informe a senha.")
@@ -46,9 +46,7 @@ export const SignUp = () => {
   });
   const { goBack } = useNavigation();
 
-  const handleSignUp = (data: FormData) => {
-    console.log(data);
-  };
+  const handleSignUp = (data: FormData) => console.log(data);
 
   const handleGoBack = () => goBack();
 
