@@ -9,3 +9,14 @@ export const storageUserSave = async (user: UserDTO) => {
     throw error;
   }
 };
+
+export const storageUserGet = async (): Promise<UserDTO | undefined> => {
+  try {
+    const storageData = await AsyncStorage.getItem(USER_STORAGE);
+    const user = storageData ? JSON.parse(storageData) : undefined;
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
