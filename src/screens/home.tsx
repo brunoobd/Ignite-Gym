@@ -2,12 +2,14 @@ import { ExerciseCard } from "@components/ExerciseCard";
 import { Group } from "@components/Group";
 import { HomeHeader } from "@components/HomeHeader";
 import { Heading, HStack, Text, VStack } from "@gluestack-ui/themed";
+import { useAuth } from "@hooks/useAuth";
 import { useNavigation } from "@react-navigation/native";
 import { AppNavigatorRoutesProps } from "@routes/app.routes";
 import { useState } from "react";
 import { FlatList } from "react-native";
 
 export const Home = () => {
+  const { user, signOut } = useAuth();
   const { navigate } = useNavigation<AppNavigatorRoutesProps>();
   const [exercises, setExercises] = useState([
     "Puxada frontal",
@@ -22,6 +24,8 @@ export const Home = () => {
     "Ombro",
   ]);
   const [groupSelected, setGroupSelected] = useState("costas");
+
+  const handleSignOut = async () => await signOut();
 
   const keyExtractor = (item: string) => item;
 
@@ -41,7 +45,11 @@ export const Home = () => {
 
   return (
     <VStack flex={1}>
-      <HomeHeader />
+      <HomeHeader
+        userPhoto={user?.avatar}
+        userName={user?.name}
+        signOut={handleSignOut}
+      />
 
       <FlatList
         data={groups}
