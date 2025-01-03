@@ -3,17 +3,122 @@ import { Input } from "@components/Input";
 import { ScreenHeader } from "@components/ScreenHeader";
 import { UserPhoto } from "@components/UserPhoto";
 import { Center, Heading, Text, useToast, VStack } from "@gluestack-ui/themed";
-import { Alert, ScrollView, TouchableOpacity } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import { ScrollView, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { ToastMessage } from "@components/ToastMessage";
+import { useAuth } from "@hooks/useAuth";
+import { Controller, useForm } from "react-hook-form";
+import { UserDTO } from "@dtos/UserDTO";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import * as yup from "yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+
+type FormData = yup.InferType<typeof profileSchema>;
+
+const profileSchema = yup.object({
+  name: yup.string().required("Informe o nome."),
+  email: yup.string(),
+  oldPassword: yup
+    .string()
+    .optional()
+    .when("password", {
+      is: (field?: string) => field,
+      then: (schema) => schema.required("Insira a senha antiga."),
+    }),
+  password: yup
+    .string()
+    .min(6, "A senha deve ter pelo menos 6 dígitos.")
+    .optional(),
+  confirmPassword: yup
+    .string()
+    .optional()
+    .oneOf(
+      [yup.ref("password"), undefined],
+      "A confirmação da senha não confere."
+    )
+    .when("password", {
+      is: (field?: string) => field,
+      then: (schema) => schema.required("Confirme a senha."),
+    }),
+});
 
 export const Profile = () => {
+  const { user, updateUserProfile } = useAuth();
   const [userPhotoURI, setUserPhotoURI] = useState(
     "https://github.com/brunoobd.png"
   );
+  const [isLoading, setIsLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    getValues,
+    clearErrors,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      name: user?.name,
+      email: user?.email,
+    },
+    resolver: yupResolver(profileSchema),
+  });
   const toast = useToast();
+
+  const handleUpdateUserData = async ({
+    name,
+    password,
+    oldPassword,
+  }: FormData) => {
+    try {
+      setIsLoading(true);
+
+      if (user) {
+        const userUpdated = user;
+        userUpdated.name = name;
+
+        await api.put("/users", {
+          name,
+          password,
+          old_password: oldPassword,
+        });
+
+        await updateUserProfile(userUpdated);
+
+        toast.show({
+          placement: "top",
+          render: ({ id }) => (
+            <ToastMessage
+              id={id}
+              title="Perfil atualizado com sucesso!"
+              onClose={() => toast.close(id)}
+            />
+          ),
+        });
+      }
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const toastDescription = isAppError
+        ? error.message
+        : "Tente novamente mais tarde.";
+
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            title="Não foi possível atualizar os dados."
+            description={toastDescription}
+            action="error"
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUserPhotoSelect = async () => {
     try {
@@ -72,7 +177,10 @@ export const Profile = () => {
             alt="Imagem do usuário"
           />
 
-          <TouchableOpacity onPress={handleUserPhotoSelect}>
+          <TouchableOpacity
+            onPress={handleUserPhotoSelect}
+            disabled={isLoading}
+          >
             <Text
               color="$green500"
               fontFamily="$heading"
@@ -85,8 +193,32 @@ export const Profile = () => {
           </TouchableOpacity>
 
           <Center w="$full" gap="$4">
-            <Input placeholder="Nome" bg="$gray600" />
-            <Input value="bruno@email.com" bg="$gray600" isReadOnly />
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  placeholder={"Nome"}
+                  onChangeText={onChange}
+                  value={value}
+                  bg="$gray600"
+                  errorMessage={errors.name?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { value } }) => (
+                <Input
+                  placeholder={"Nome"}
+                  value={value}
+                  bg="$gray600"
+                  isReadOnly
+                />
+              )}
+            />
           </Center>
 
           <Heading
@@ -101,15 +233,89 @@ export const Profile = () => {
           </Heading>
 
           <Center w="$full" gap="$4">
-            <Input placeholder="Senha antiga" bg="$gray600" secureTextEntry />
-            <Input placeholder="Nova senha" bg="$gray600" secureTextEntry />
-            <Input
-              placeholder="Confirme a nova senha"
-              bg="$gray600"
-              secureTextEntry
+            <Controller
+              control={control}
+              name="oldPassword"
+              render={({ field: { onChange } }) => (
+                <Input
+                  placeholder="Senha antiga"
+                  bg="$gray600"
+                  secureTextEntry
+                  onChangeText={(value) => {
+                    let newValue = undefined;
+
+                    if (!!value) {
+                      newValue = value;
+                    }
+
+                    onChange(newValue);
+                  }}
+                  errorMessage={errors.oldPassword?.message}
+                />
+              )}
             />
 
-            <Button title="Atualizar" />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  placeholder="Nova senha"
+                  bg="$gray600"
+                  secureTextEntry
+                  onChangeText={(value) => {
+                    let newValue = undefined;
+
+                    if (!!value) {
+                      newValue = value;
+                    }
+
+                    if (newValue === undefined && !getValues("oldPassword")) {
+                      clearErrors("oldPassword");
+                    }
+
+                    if (
+                      newValue === undefined &&
+                      !getValues("confirmPassword")
+                    ) {
+                      clearErrors("confirmPassword");
+                    }
+
+                    onChange(newValue);
+                  }}
+                  value={!!value ? value : undefined}
+                  errorMessage={errors.password?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  placeholder="Confirme a nova senha"
+                  bg="$gray600"
+                  secureTextEntry
+                  onChangeText={(value) => {
+                    let newValue = undefined;
+
+                    if (!!value) {
+                      newValue = value;
+                    }
+
+                    onChange(newValue);
+                  }}
+                  errorMessage={errors.confirmPassword?.message}
+                />
+              )}
+            />
+
+            <Button
+              title="Atualizar"
+              onPress={handleSubmit(handleUpdateUserData)}
+              isLoading={isLoading}
+            />
           </Center>
         </Center>
       </ScrollView>
