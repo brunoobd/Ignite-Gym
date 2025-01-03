@@ -46,7 +46,7 @@ export const Exercise = () => {
         render: ({ id }) => (
           <ToastMessage
             id={id}
-            title="Parabéns"
+            title="Parabéns."
             description={"Exercício registrado no seu histórico."}
             onClose={() => toast.close(id)}
           />

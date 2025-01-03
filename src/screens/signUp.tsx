@@ -34,8 +34,7 @@ const signUpSchema = yup.object({
   password: yup
     .string()
     .required("Informe a senha.")
-    .min(6, "A senha deve ter pelo menos 6 dígitos.")
-    .uppercase("A senha"),
+    .min(6, "A senha deve ter pelo menos 6 dígitos."),
   confirmPassword: yup
     .string()
     .required("Confirme a senha")
@@ -60,7 +59,7 @@ export const SignUp = () => {
       setIsLoading(true);
 
       await api.post("/users", { name, email, password });
-      
+
       await signIn({ email, password });
     } catch (error) {
       const isAppError = error instanceof AppError;
