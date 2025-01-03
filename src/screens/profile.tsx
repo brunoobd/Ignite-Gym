@@ -15,8 +15,9 @@ import * as FileSystem from "expo-file-system";
 import * as yup from "yup";
 import { api } from "@services/api";
 import { AppError } from "@utils/AppError";
+import defaultUserPhotoImg from "@assets/userPhotoDefault.png"
 
-type FormData = yup.InferType<typeof profileSchema>;
+type FormDataProps = yup.InferType<typeof profileSchema>;
 
 const profileSchema = yup.object({
   name: yup.string().required("Informe o nome."),
@@ -47,17 +48,15 @@ const profileSchema = yup.object({
 
 export const Profile = () => {
   const { user, updateUserProfile } = useAuth();
-  const [userPhotoURI, setUserPhotoURI] = useState(
-    "https://github.com/brunoobd.png"
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const {
     control,
     handleSubmit,
     getValues,
     clearErrors,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<FormDataProps>({
     defaultValues: {
       name: user?.name,
       email: user?.email,
@@ -70,9 +69,9 @@ export const Profile = () => {
     name,
     password,
     oldPassword,
-  }: FormData) => {
+  }: FormDataProps) => {
     try {
-      setIsLoading(true);
+      setIsUpdatingUser(true);
 
       if (user) {
         const userUpdated = user;
@@ -116,12 +115,14 @@ export const Profile = () => {
         ),
       });
     } finally {
-      setIsLoading(false);
+      setIsUpdatingUser(false);
     }
   };
 
   const handleUserPhotoSelect = async () => {
     try {
+      setIsUpdatingPhoto(true);
+
       const photoSelectionResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         aspect: [4, 4],
@@ -130,7 +131,8 @@ export const Profile = () => {
       });
 
       if (!photoSelectionResult.canceled) {
-        const photoSelectedURI = photoSelectionResult.assets[0].uri;
+        const photoSelected = photoSelectionResult.assets[0];
+        const photoSelectedURI = photoSelected.uri;
 
         if (photoSelectedURI) {
           const photoSelectedInfo = await FileSystem.getInfoAsync(
@@ -142,7 +144,40 @@ export const Profile = () => {
               photoSelectedInfo.size / 1024 / 1024 <= 5;
 
             if (isPhotoSelectedSize5MBOrLess) {
-              setUserPhotoURI(photoSelectedURI);
+              const photoSelectedExtension = photoSelectedURI.split(".").pop();
+              const userName = user?.name.trim().split(" ").join("-");
+              const photoSelectedObject = {
+                name: `${userName}.${photoSelectedExtension}`.toLowerCase(),
+                uri: photoSelectedURI,
+                type: `${photoSelected.type}/${photoSelectedExtension}`,
+              } as any;
+              const userPhotoUploadForm = new FormData();
+              userPhotoUploadForm.append("avatar", photoSelectedObject);
+
+              const photoUpdatedResponse = await api.patch(
+                "/users/avatar",
+                userPhotoUploadForm,
+                {
+                  headers: { "Content-Type": "multipart/form-data" },
+                }
+              );
+
+              if (user) {
+                const userUpdated = user;
+                userUpdated.avatar = photoUpdatedResponse.data.avatar;
+                await updateUserProfile(userUpdated);
+              }
+
+              toast.show({
+                placement: "top",
+                render: ({ id }) => (
+                  <ToastMessage
+                    id={id}
+                    title="Foto atualizada com sucesso!"
+                    onClose={() => toast.close(id)}
+                  />
+                ),
+              });
             } else {
               toast.show({
                 placement: "top",
@@ -161,7 +196,25 @@ export const Profile = () => {
         }
       }
     } catch (error) {
-      console.log(error);
+      const isAppError = error instanceof AppError;
+      const toastDescription = isAppError
+        ? error.message
+        : "Tente novamente mais tarde.";
+
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            title="Não foi possível atualizar a foto."
+            description={toastDescription}
+            action="error"
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+    } finally {
+      setIsUpdatingPhoto(false);
     }
   };
 
@@ -172,14 +225,18 @@ export const Profile = () => {
       <ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
         <Center mt="$6" px="$10">
           <UserPhoto
-            source={{ uri: userPhotoURI }}
+            source={
+              user?.avatar
+                ? { uri: `${api.defaults.baseURL}/avatar/${user?.avatar}` }
+                : defaultUserPhotoImg
+            }
             size="xl"
             alt="Imagem do usuário"
           />
 
           <TouchableOpacity
             onPress={handleUserPhotoSelect}
-            disabled={isLoading}
+            disabled={isUpdatingPhoto || isUpdatingUser}
           >
             <Text
               color="$green500"
@@ -314,7 +371,7 @@ export const Profile = () => {
             <Button
               title="Atualizar"
               onPress={handleSubmit(handleUpdateUserData)}
-              isLoading={isLoading}
+              isLoading={isUpdatingUser || isUpdatingPhoto}
             />
           </Center>
         </Center>

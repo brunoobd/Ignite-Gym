@@ -3,6 +3,7 @@ import { UserPhoto } from "./UserPhoto";
 import { LogOut } from "lucide-react-native";
 import defaultUserPhotoImg from "@assets/userPhotoDefault.png";
 import { TouchableOpacity } from "react-native";
+import { api } from "@services/api";
 
 type Props = {
   userPhoto?: string;
@@ -13,7 +14,11 @@ type Props = {
 export const HomeHeader = ({ userPhoto, userName, signOut }: Props) => (
   <HStack bg="$gray600" pt="$16" pb="$5" px="$8" alignItems="center" gap="$4">
     <UserPhoto
-      source={userPhoto ? { uri: userPhoto } : defaultUserPhotoImg}
+      source={
+        userPhoto
+          ? { uri: `${api.defaults.baseURL}/avatar/${userPhoto}` }
+          : defaultUserPhotoImg
+      }
       w="$16"
       h="$16"
       alt="Imagem do usuário"
